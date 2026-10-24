@@ -151,7 +151,7 @@ async function allTx(accId){
 }
 async function auto(){
   const h=(location.hash||'').slice(1);
-  const m=/^add_([A-Za-z]{3})_([0-9.]+)(?:_([^_]*))?(?:_([0-9]+))?$/.exec(h);
+  const m=/^add_([A-Za-z]{3})_[A-Za-z]{0,3}([0-9.]+)(?:_([^_]*))?(?:_([0-9]+))?$/.exec(h);
   if(!m)return;
   if(m[4]&&S.cfg.lastAuto===h){S.msg='This payment was already logged';return}
   const cur=m[1].toUpperCase(),amt=cents(m[2]),ac=normals().find(x=>x.cur===cur);
@@ -159,7 +159,7 @@ async function auto(){
   const note=(m[3]||'').replace(/-/g,' ').trim();
   if(!S.cfg.cats.includes('Uncategorized'))S.cfg.cats.push('Uncategorized');
   S.month=today().slice(0,7);await ensure(S.month);
-  await addTx({id:uid(),t:'e',a:amt,acc:ac.id,cat:'Uncategorized',note,d:today(),auto:1});
+  await addTx({id:uid(),t:'e',a:amt,acc:ac.id,cat:'Uncategorized',note,d:today(),auto:1});S.tab='home';
   if(m[4])S.cfg.lastAuto=h;await saveCfg();
   S.msg='Auto-logged '+money(amt,cur)+(note?' · '+note:'')+' ('+ac.name+')'+budMsg(ac.id,'Uncategorized',S.month);
 }
@@ -324,6 +324,7 @@ async function run0(ev){
   render();
 }
 
+window.addEventListener('hashchange',async()=>{if(!S.cfg)return;try{await auto();render()}catch(e){}});
 (async()=>{
   $('#app').innerHTML='<div class="card mu">Loading…</div>';
   await Promise.race([initDb(),new Promise(r=>setTimeout(r,4000))]);ready=true;
