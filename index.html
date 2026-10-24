@@ -201,7 +201,7 @@ function vAdd(){
 <input id="amt" class="amt" type="number" inputmode="decimal" step="0.01" placeholder="0.00" value="${E(D.amt||'')}">
 <select id="ac">${nm.map(a=>`<option value="${a.id}"${a.id===D.ac?' selected':''}>${aico(a)} ${E(a.name)} · ${a.cur}</option>`).join('')}</select>
 <input type="hidden" id="ct" value="${E(sel)}">
-<div class="cats">${cats.map(x=>`<button class="cat${x===sel?' on':''}" data-a="pickCat" data-v="${E(x)}"><span>${ico(x)}</span>${E(x)}</button>`).join('')}</div>
+<div class="cats">${cats.map(x=>`<button class="cat${x===sel?' on':''}" data-a="pickCat" data-v="${E(x)}"><span>${ico(x)}</span>${E(x)}</button>`).join('')}<button class="cat" data-a="newCat"><span>＋</span>New</button></div>${S.addNew?`<div class="addrow"><input id="ni${S.addT}" class="emo" placeholder="🏷️"><input id="nc${S.addT}" placeholder="New ${e?'expense':'income'} category"><button class="p sm" data-a="addCat" data-v="${S.addT}">Add</button></div>`:''}
 <div class="g2"><input id="nt" placeholder="Note (optional)" value="${E(D.nt||'')}"><input id="dt" type="date" value="${D.dt||today()}"></div>
 <button class="p" data-a="saveTx">Save ${e?'expense':'income'}</button></div>`+fold('help','⚡ Apple Pay auto-log setup',`<p class="mu">In Shortcuts, create a Personal Automation triggered by Wallet Transaction, choose a card, and add an Open URL action:</p><p><code>YOUR-PAGE-LINK#add_MYR_AMOUNT_MERCHANT_TIMESTAMP</code></p><p class="mu">Use the transaction variables for amount and merchant. Replace spaces and symbols in the merchant with - (only letters, digits and _ ~ - . work after the #). Format the current date as yyyyMMddHHmmss for the timestamp so repeats are ignored. Hard-code the card currency, one automation per card. A normal account in that currency must exist.</p>`);
 }
@@ -262,8 +262,9 @@ async function run0(ev){
   const armed=k=>{if(S.pend!==k){S.pend=k;render();return false}S.pend='';return true};
   if(a==='open'){S.open=S.open===v?'':v}
   else if(a==='rs'){S.rs=!S.rs}
+  else if(a==='newCat'){S.draft={amt:val('amt'),nt:val('nt'),ac:val('ac'),dt:val('dt'),ct:val('ct')};S.addNew=!S.addNew}
   else if(a==='pickCat'){const i=$('#ct');if(i)i.value=v;document.querySelectorAll('.cat').forEach(b=>b.classList.toggle('on',b.dataset.v===v));return}
-  else if(a==='tab'){S.tab=v;S.pend='';S.accId='';S.open='';S.draft=null}
+  else if(a==='tab'){S.tab=v;S.pend='';S.accId='';S.open='';S.draft=null;S.addNew=false}
   else if(a==='mon'){const d=new Date(S.month+'-01T00:00:00');d.setMonth(d.getMonth()+Number(v));S.month=d.getFullYear()+'-'+p2(d.getMonth()+1);await ensure(S.month)}
   else if(a==='addT'){S.draft={amt:val('amt'),nt:val('nt'),ac:val('ac'),dt:val('dt')};S.addT=v}
   else if(a==='saveTx'){
@@ -314,7 +315,7 @@ async function run0(ev){
   else if(a==='editBud'){S.editBud=v}
   else if(a==='saveBud'){const l=cents(val('eb')),b=c.budgets.find(x=>x.id===v);if(!b||!l){S.msg='Enter a valid amount';return render()}b.limit=l;S.editBud='';await saveCfg();S.msg='Budget updated'}
   else if(a==='delBud'){if(!armed(a+':'+v))return;c.budgets=c.budgets.filter(x=>x.id!==v);await saveCfg()}
-  else if(a==='addCat'){const n=val('nc'+v),i=[...val('ni'+v)][0];if(n){const l=v==='e'?c.cats:c.icats;if(!l.includes(n))l.push(n);if(i)c.icons[n]=i;await saveCfg()}}
+  else if(a==='addCat'){const n=val('nc'+v),i=[...val('ni'+v)][0];if(n){const l=v==='e'?c.cats:c.icats;if(!l.includes(n))l.push(n);if(i)c.icons[n]=i;if(S.tab==='add'){S.draft={amt:val('amt'),nt:val('nt'),ac:val('ac'),dt:val('dt'),ct:n};S.addNew=false}await saveCfg()}else S.msg='Enter a category name'}
   else if(a==='delCat'){if(!armed(a+':'+v))return;const[k,n]=v.split('|');const l=k==='e'?c.cats:c.icats;l.splice(l.indexOf(n),1);await saveCfg()}
   else if(a==='addGoal'){
     const n=val('gn'),t=cents(val('gt'));if(!n||!t){S.msg='Enter a name and a target amount';return render()}
